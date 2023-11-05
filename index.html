@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Store Locator</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <style>
+      #mapContainer {
+        position: relative;
+        height: 100vh; /* Adjust this value to control the height of the map section */
+        width: 100%;
+      }
+      #map {
+        height: 100%;
+        width: 100%;
+        z-index: 0;
+      }
+      #sidebar {
+        position: absolute;
+        bottom: 10px;
+        left: 20px;
+        width: 30%; /* Increase width to 30% of the viewport width */
+        max-width: 450px; /* You might also want to adjust the max-width accordingly */
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 5px;
+        padding: 10px;
+        overflow-y: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        max-height: 80vh;
+        height: 80vh; /* Adjust this value based on your desired height */
+      }
+      .store-card {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        box-sizing: border-box; /* this ensures padding and border are included in the total width */
+        overflow: hidden;
+      }
+      .store-card img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%; /* Makes the image round */
+        margin-right: 10px;
+      }
+      .store-info {
+        flex-grow: 1;
+      }
+      .store-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .store-details {
+        margin-top: 10px;
+      }
+      .view-more-btn {
+        display: block; /* Makes the button take up the full width */
+        margin-top: 10px;
+        padding: 5px 10px;
+        border: 1px solid black; /* Black border */
+        background-color: transparent; /* Transparent background */
+        color: #000; /* Black text color */
+        border-radius: 20px; /* Makes the button round */
+        cursor: pointer;
+        text-align: center; /* Centers the text in the button */
+        width: 100%;
+      }
+      .store-category {
+        color: grey;
+        margin-top: 5px;
+        display: block;
+      }
+      .badge {
+        display: inline-block;
+        background-color: grey;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 2px;
+        margin-right: 5px;
+        margin-top: 5px;
+        font-size: 0.8em;
+      }
+
+      /*Poppup CSS*/
+
+      /* Add any other styling specifics for the popup card here */
+    </style>
+  </head>
+  <body>
+    <div id="mapContainer">
+      <div id="map"></div>
+      <div id="sidebar">
+        <h3 id="resultsHeader">Results</h3>
+        <!-- Store cards will be dynamically populated here -->
+      </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+      var map = L.map("map").setView([37.8, -96], 4); // Centered on US
+      map.zoomControl.setPosition("topright");
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(
+        map
+      );
+
+      var storeData = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              name: "STIIZI - acm (#11 - acm)",
+              address: "123 Main St",
+              rating: 4.5,
+              reviews: 14,
+              phone: "(123) 456-7890",
+              email: "acm@gmail.com",
+              location: "Springfield, MA",
+              category: "Dispensary",
+              status: "Open Now",
+              orderOnline: true,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-72.5884, 42.1015], // Springfield, MA
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "Shroom Jet - annie casco (#3 - anniec)",
+              address: "1407 N Batavia ST Orange, , orange county,",
+              rating: 4.2,
+              reviews: 24,
+              phone: "(888) 888 8888",
+              email: "anniecasco@gmail.com",
+              location: "California, United States",
+              category: "Dispensary",
+              status: "Open Now",
+              orderOnline: true,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-72.5903, 42.0998], // Springfield, MA
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "Casco - Casco (#4 - casco)",
+              address: "789 Elm St",
+              rating: 3.8,
+              reviews: 4,
+              phone: "(543) 210-9876",
+              email: "yaruani.casco@gmail.com",
+              location: "Los Angeles, CA",
+              category: "Dispensary",
+              status: "Open Now",
+              orderOnline: true,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-118.2437, 34.0522], // Los Angeles, CA
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "Store Test 1 - store-retailer",
+              address: "321 Oak St",
+              rating: 4.7,
+              reviews: 6,
+              phone: "(321) 654-0987",
+              email: "store-retailer@gmail.com",
+              location: "Los Angeles, CA",
+              category: "Dispensary",
+              status: "Open Now",
+              orderOnline: true,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-118.2509, 34.0505], // Los Angeles, CA
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "Store Test 1",
+              address: "1407 N Batavia ST Orange",
+              rating: 3.9,
+              reviews: 53,
+              phone: "(789) 012-3456",
+              email: "an@gmail.com",
+              location: "United States (US)",
+              category: "Dispensary",
+              status: "Open Now",
+              orderOnline: true,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-122.4194, 37.7749], // San Francisco, CA
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              name: "Jim - Jim (#7 - test1)",
+              address: "987 Maple St",
+              rating: 4.6,
+              reviews: 42,
+              phone: "(456) 789-0123",
+              email: "mosesdimitrius@gmail.com",
+              location: "San Francisco, CA",
+              category: "Dispensary",
+              status: "Open Now",
+              orderOnline: true,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-122.4215, 37.7732], // San Francisco, CA
+            },
+          },
+        ],
+      };
+
+      function generateStars(rating) {
+        let stars = "";
+        for (let i = 1; i <= 5; i++) {
+          if (rating >= i) {
+            stars += "★";
+          } else if (rating >= i - 0.5) {
+            stars += "☆";
+          } else {
+            stars += "✩";
+          }
+        }
+        return stars;
+      }
+      /*marker genrator*/
+      function createYellowLeafMarker() {
+        var svg = `
+    <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+        <!-- Yellow Circle -->
+        <circle cx="32" cy="32" r="30" fill="#FFB700" />
+        <!-- Leaf Icon in the Middle -->
+        <path d="M32 14c-9.94 0-18 8.06-18 18s8.06 18 18 18 18-8.06 18-18-8.06-18-18-18zm0 34c-8.84 0-16-7.16-16-16s7.16-16 16-16 16 7.16 16 16-7.16 16-16 16z" fill="#006400"/>
+        <path d="M32 10c-12.13 0-22 9.87-22 22s9.87 22 22 22 22-9.87 22-22-9.87-22-22-22zm0 42c-11.05 0-20-8.95-20-20s8.95-20 20-20 20 8.95 20 20-8.95 20-20 20z" fill="#006400"/>
+    </svg>`;
+        var url = "data:image/svg+xml;base64," + btoa(svg);
+        return L.icon({
+          iconUrl: url,
+          iconSize: [40, 40], // size of the icon, adjust if necessary
+          iconAnchor: [20, 20], // point of the icon which will correspond to marker's location
+          popupAnchor: [0, -20], // point from which the popup should open relative to the iconAnchor
+        });
+      }
+      function createCardContent(feature) {
+        const stars = generateStars(feature.properties.rating);
+        return `
+    <div class="store-card">
+        <img src="${feature.properties.image}" alt="Store Image">
+        <div class="store-info">
+            <div class="store-title">${feature.properties.name}</div>
+            <div class="store-details">
+                Rating: ${stars} ${feature.properties.rating} (${
+          feature.properties.reviews
+        }) <br>
+                <div class="store-category">${feature.properties.category}</div>
+                <span class="badge">${feature.properties.status}</span>
+                ${
+                  feature.properties.orderOnline
+                    ? '<span class="badge">Order Online</span>'
+                    : ""
+                }
+                Phone: ${feature.properties.phone} <br>
+                Email: ${feature.properties.email}
+            </div>
+        </div>
+    </div>`;
+      }
+
+      function populateSidebar(features) {
+        var sidebar = document.getElementById("sidebar");
+        sidebar.innerHTML =
+          "<h3>Results " +
+          (features.length > 0 ? "1 to " + features.length : "0") +
+          "</h3>";
+        features.forEach(function (feature) {
+          const stars = generateStars(feature.properties.rating);
+          var card = `
+                <div class="store-card">
+                    <img src="https://via.placeholder.com/50" alt="Store Image">
+                    <div class="store-info">
+                        <div class="store-title">${
+                          feature.properties.name
+                        }</div>
+                        <div class="store-details">
+                            Rating: ${stars} ${feature.properties.rating} (${
+            feature.properties.reviews
+          } ) <br>
+                            <div class="store-category">${
+                              feature.properties.category
+                            }</div>
+                            <span class="badge">${
+                              feature.properties.status
+                            }</span>
+                            ${
+                              feature.properties.orderOnline
+                                ? '<span class="badge">Order Online</span>'
+                                : ""
+                            }
+                            Phone: ${feature.properties.phone} <br>
+                            Email: ${feature.properties.email}
+                        </div>
+                        <button class="view-more-btn">View More</button>
+                    </div>
+                </div>
+            `;
+          sidebar.innerHTML += card;
+        });
+        if (features.length === 0) {
+          sidebar.innerHTML += "<p>No stores found</p>";
+        }
+      }
+      var geoLayer = L.geoJSON(storeData, {
+        pointToLayer: function (feature, latlng) {
+          var customIcon = createYellowLeafMarker();
+          return L.marker(latlng, { icon: customIcon });
+        },
+        onEachFeature: function (feature, layer) {
+          layer.bindPopup(createCardContent(feature));
+          layer.on("mouseover", function () {
+            this.openPopup();
+          });
+          layer.on("mouseout", function () {
+            this.closePopup();
+          });
+          layer.on("click", function () {
+            populateSidebar([feature]);
+          });
+        },
+      }).addTo(map);
+
+      populateSidebar(geoLayer.getLayers().map((layer) => layer.feature));
+    </script>
+  </body>
+</html>
